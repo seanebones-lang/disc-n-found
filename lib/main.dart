@@ -66,6 +66,9 @@ class DiscNFoundApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
       },
+      // Copyright Notice
+      // Copyright © 2026 Corby Bibb. All Rights Reserved.
+      // "Disc 'n' Found" is a trademark of Corby Bibb.
     );
   }
 }
