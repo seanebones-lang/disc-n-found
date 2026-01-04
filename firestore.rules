@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is the owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read user profiles
+      allow read: if true;
+      
+      // Users can only create/update their own profile
+      allow create, update: if isOwner(userId);
+      
+      // Users can delete their own profile
+      allow delete: if isOwner(userId);
+    }
+    
+    // Discs collection
+    match /discs/{discId} {
+      // Anyone can read discs
+      allow read: if true;
+      
+      // Only authenticated users can create discs
+      allow create: if isAuthenticated() 
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'imageUrl', 'description', 'status', 'timestamp']);
+      
+      // Only the uploader or claimer can update
+      allow update: if isAuthenticated() && (
+        isOwner(resource.data.userId) || // Uploader can update
+        (request.resource.data.claimedBy == request.auth.uid && resource.data.claimedBy == null) // Claimer can claim
+      );
+      
+      // Only uploader can delete
+      allow delete: if isOwner(resource.data.userId);
+    }
+    
+    // Chats collection
+    match /chats/{chatId} {
+      // Only participants can read/write
+      function isParticipant() {
+        return isAuthenticated() && request.auth.uid in resource.data.participants;
+      }
+      
+      allow read, write: if isParticipant();
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Only participants can read/write messages
+        function isChatParticipant() {
+          return isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        }
+        
+        allow read, write: if isChatParticipant();
+      }
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isOwner(resource.data.userId);
+      
+      // System can create notifications (via Cloud Functions)
+      allow create: if isAuthenticated();
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isOwner(resource.data.userId);
+      
+      // Users can delete their own notifications
+      allow delete: if isOwner(resource.data.userId);
+    }
+  }
+}

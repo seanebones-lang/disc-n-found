@@ -51,6 +51,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.signInWithGoogle();
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign in failed: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,6 +157,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       );
                     },
                     child: const Text('Don\'t have an account? Sign up'),
+                  ),
+                  const SizedBox(height: 16),
+                  const Row(
+                    children: [
+                      Expanded(child: Divider()),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('OR'),
+                      ),
+                      Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _handleGoogleSignIn,
+                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    label: const Text('Sign in with Google'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
                   ),
                 ],
               ),

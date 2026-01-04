@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/auth_provider.dart';
@@ -8,6 +9,15 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/discs/screens/feed_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
 import 'features/subscriptions/screens/subscription_screen.dart';
+import 'services/subscription_service.dart';
+import 'services/notification_service.dart';
+
+// Background message handler
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('Handling background message: ${message.messageId}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +26,20 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    // Initialize Firebase Messaging background handler
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    
+    // Initialize notifications
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+    
+    // Initialize Stripe (will need to set publishable key)
+    final subscriptionService = SubscriptionService();
+    await subscriptionService.initializeStripe();
+    
+    // Analytics will be initialized after user login
+    
   } catch (e) {
     // Firebase not configured yet - user needs to run flutterfire configure
     debugPrint('Firebase initialization error: $e');

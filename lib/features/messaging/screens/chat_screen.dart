@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../models/message_model.dart';
 import '../../../services/messaging_service.dart';
+import '../../../services/analytics_service.dart';
 
 final messagingServiceProvider = Provider<MessagingService>((ref) => MessagingService());
 
@@ -74,6 +75,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(messagesProvider(widget.chatId));
     final currentUser = ref.watch(currentUserProvider).value;
+    
+    // Log screen view
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.logChatOpened(widget.chatId);
+    });
 
     return Scaffold(
       appBar: AppBar(

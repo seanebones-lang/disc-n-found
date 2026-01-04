@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../services/analytics_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -89,6 +90,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       });
 
       setState(() => _isEditing = false);
+      await AnalyticsService.logProfileUpdate();
       ref.invalidate(currentUserProvider);
     } catch (e) {
       if (mounted) {

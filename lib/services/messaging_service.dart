@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/message_model.dart';
 import '../core/constants/app_constants.dart';
+import 'analytics_service.dart';
+import 'notification_service.dart';
 
 class MessagingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -41,14 +43,34 @@ class MessagingService {
           .set(message.toMap());
 
       // Update chat metadata
+      final participants = chatId.split('_');
       await _firestore
           .collection(AppConstants.chatsCollection)
           .doc(chatId)
           .set({
         'lastMessage': text,
         'lastMessageTime': FieldValue.serverTimestamp(),
-        'participants': [chatId.split('_')[0], chatId.split('_')[1]],
+        'participants': participants,
       }, SetOptions(merge: true));
+      
+      // Log analytics
+      await AnalyticsService.logMessageSent(chatId: chatId, hasImage: imageUrl != null);
+      
+      // Send notification to recipient
+      final recipientId = participants.firstWhere((id) => id != senderId);
+      final senderDoc = await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(senderId)
+          .get();
+      final senderName = senderDoc.data()?['displayName'] ?? 'Someone';
+      
+      final notificationService = NotificationService();
+      await notificationService.sendMessageNotification(
+        recipientUserId: recipientId,
+        senderName: senderName,
+        messageText: text,
+        chatId: chatId,
+      );
     } catch (e) {
       throw Exception('Failed to send message: $e');
     }

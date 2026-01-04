@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile images
+    match /profiles/{userId} {
+      // Anyone can read profile images
+      allow read: if true;
+      
+      // Only the user can upload/update their own profile image
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024 // 5MB limit
+        && request.resource.contentType.matches('image/.*');
+    }
+    
+    // Disc images
+    match /discs/{userId}/{allPaths=**} {
+      // Anyone can read disc images
+      allow read: if true;
+      
+      // Authenticated users can upload disc images
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 10 * 1024 * 1024 // 10MB limit
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

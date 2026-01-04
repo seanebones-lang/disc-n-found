@@ -2,12 +2,75 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../services/subscription_service.dart';
+import '../../../services/analytics_service.dart';
 
-class SubscriptionScreen extends ConsumerWidget {
+final subscriptionServiceProvider = Provider<SubscriptionService>((ref) => SubscriptionService());
+
+class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
+  bool _isProcessing = false;
+
+  Future<void> _handleSubscribe(String tier) async {
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login first')),
+      );
+      return;
+    }
+
+    setState(() => _isProcessing = true);
+
+    try {
+      final subscriptionService = ref.read(subscriptionServiceProvider);
+      
+      // Create payment intent
+      final paymentIntent = await subscriptionService.createPaymentIntent(
+        tier: tier,
+        userId: currentUser.uid,
+      );
+
+      // Confirm payment
+      await subscriptionService.confirmPayment(
+        clientSecret: paymentIntent['clientSecret'] as String,
+        tier: tier,
+      );
+
+      // Log analytics
+      final price = tier == 'basic' 
+          ? AppConstants.basicPrice 
+          : AppConstants.premiumPrice;
+      await AnalyticsService.logSubscriptionStart(tier: tier, price: price);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Subscription activated successfully!')),
+        );
+        // Refresh user data
+        ref.invalidate(currentUserProvider);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider).value;
 
     return Scaffold(
@@ -42,6 +105,8 @@ class SubscriptionScreen extends ConsumerWidget {
               ],
               isPremium: false,
               currentTier: currentUser?.subscriptionTier ?? 'free',
+              onSubscribe: () => _handleSubscribe('basic'),
+              isProcessing: _isProcessing,
             ),
             const SizedBox(height: 16),
             _SubscriptionCard(
@@ -56,6 +121,8 @@ class SubscriptionScreen extends ConsumerWidget {
               ],
               isPremium: true,
               currentTier: currentUser?.subscriptionTier ?? 'free',
+              onSubscribe: () => _handleSubscribe('premium'),
+              isProcessing: _isProcessing,
             ),
             const SizedBox(height: 32),
             if (currentUser?.subscriptionTier != 'free')
@@ -91,6 +158,8 @@ class _SubscriptionCard extends StatelessWidget {
   final List<String> features;
   final bool isPremium;
   final String currentTier;
+  final VoidCallback onSubscribe;
+  final bool isProcessing;
 
   const _SubscriptionCard({
     required this.title,
@@ -98,6 +167,8 @@ class _SubscriptionCard extends StatelessWidget {
     required this.features,
     required this.isPremium,
     required this.currentTier,
+    required this.onSubscribe,
+    required this.isProcessing,
   });
 
   @override
@@ -181,22 +252,21 @@ class _SubscriptionCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: isCurrentPlan || !isFree
-                    ? null
-                    : () {
-                        // TODO: Integrate Stripe payment
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Stripe integration coming soon'),
-                          ),
-                        );
-                      },
+                onPressed: (isCurrentPlan || !isFree || isProcessing) 
+                    ? null 
+                    : onSubscribe,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: Text(
-                  isCurrentPlan ? 'Current Plan' : 'Subscribe',
-                ),
+                child: isProcessing
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        isCurrentPlan ? 'Current Plan' : 'Subscribe',
+                      ),
               ),
             ),
           ],
