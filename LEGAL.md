@@ -7,6 +7,7 @@
 ### Ownership
 
 **Owner**: Corby Bibb
+**Code Development**: NextEleven S. McDonnell, CTO
 
 All proprietary code, software, designs, concepts, ideas, documentation, and 
 intellectual property contained in this repository and the Disc 'n' Found 
@@ -105,3 +106,4 @@ For licensing inquiries, permissions, or legal matters, contact Corby Bibb.
 
 **Copyright © 2026 Corby Bibb. All Rights Reserved.**
 **"Disc 'n' Found" is a trademark of Corby Bibb.**
+**Code developed by NextEleven S. McDonnell, CTO**

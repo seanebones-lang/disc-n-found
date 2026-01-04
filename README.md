@@ -2,6 +2,8 @@
 
 A comprehensive mobile application for disc golfers to report lost or found discs by uploading photos, allowing other users to claim their items through a community feed. Built with Flutter for cross-platform Android and iOS support.
 
+**Code developed by NextEleven S. McDonnell, CTO**
+
 ---
 
 ## 📋 Table of Contents

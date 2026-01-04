@@ -1,6 +1,7 @@
 # Disc 'n' Found - Complete Build Guide
 
 **Copyright © 2026 Corby Bibb. All Rights Reserved.**
+**Code developed by NextEleven S. McDonnell, CTO**
 
 This comprehensive guide will walk you through building, configuring, and deploying the Disc 'n' Found mobile application from scratch.
 
@@ -1015,6 +1016,7 @@ For additional support or questions not covered in this guide, contact Corby Bib
 
 **Copyright © 2026 Corby Bibb. All Rights Reserved.**
 **"Disc 'n' Found" is a trademark of Corby Bibb.**
+**Code developed by NextEleven S. McDonnell, CTO**
 
 ---
 

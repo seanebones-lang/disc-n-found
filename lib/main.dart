@@ -1,3 +1,9 @@
+/// Disc 'n' Found
+/// Copyright © 2026 Corby Bibb. All Rights Reserved.
+/// "Disc 'n' Found" is a trademark of Corby Bibb.
+/// 
+/// Code developed by NextEleven S. McDonnell, CTO
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -69,6 +75,7 @@ class DiscNFoundApp extends StatelessWidget {
       // Copyright Notice
       // Copyright © 2026 Corby Bibb. All Rights Reserved.
       // "Disc 'n' Found" is a trademark of Corby Bibb.
+      // Code developed by NextEleven S. McDonnell, CTO
     );
   }
 }
